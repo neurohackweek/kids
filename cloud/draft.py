@@ -24,7 +24,7 @@ filename = 'Phenotypic_V1_0b_preprocessed1.csv'
 
 csv = pd.read_csv(filename)
 
-keys = ['AGE_AT_SCAN', 'SITE_ID']
+keys = ['DX_GROUP', 'SEX', 'AGE_AT_SCAN', 'SITE_ID']
 
 csv_sub, sss = split_data(csv, keys, num_iter=3, random_state=0)
 
