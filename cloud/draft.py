@@ -3,7 +3,6 @@ from sklearn.cross_validation import StratifiedShuffleSplit
 import numpy as np
 
 def split_data(df, keys, num_iter=3, random_state=0):
-    output = df[keys].apply(lambda x: len(x.unique()))
     for key in keys:
 	if len(df[key].unique())>2:
 		df[key] = pd.qcut(df[key], 2, labels=[0,1])
