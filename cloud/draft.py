@@ -3,13 +3,19 @@ from sklearn.cross_validation import StratifiedShuffleSplit
 import numpy as np
 
 def split_data(df, keys, num_iter=3, random_state=0):
-    for key in keys:
-	if len(df[key].unique())>2:
-		df[key] = pd.qcut(df[key], 2, labels=[0,1])
     labels = [ '.'.join([str(df[key][i]) for key in keys]) for i in range(len(df))]
-    return StratifiedShuffleSplit(labels, num_iter, test_size=0.5, random_state=0)
+    return StratifiedShuffleSplit(labels, num_iter, test_size=0.5, random_state=random_state)
 
 csv = pd.read_csv(filename)
+
+keys = ['AGE_AT_SCAN', 'SITE_ID', 'SEX' ]
+
+# age -> 0:young/1:old (median)
+for key in keys:
+    if 'AGE' in key:    # TODO: better way?
+    #if len(df[key].unique())>2:
+            df[key] = pd.qcut(df[key], 2, labels=[0,1])
+
 sss = split_data(csv, keys, num_iter=3, random_state=0)
 print sss
 assess = []
