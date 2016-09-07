@@ -5,16 +5,20 @@ import numpy as np
 def group_data(df, keys):
     for key in keys:
         if 'AGE' in key:
-                df[key] = pd.qcut(df[key], 2, labels=[0,1])
-    labels = [ '.'.join([str(df[key][i]) for key in keys]) for i in range(len(df))]
-    cellsize = np.unique(labels, return_counts=True)[1]
-    mask = np.where(cellsize < 2)
+            df[key] = pd.qcut(df[key], 2, labels=[0,1])
+    labels = [ '.'.join([str(df[key].iloc[i]) for key in keys]) for i in range(len(df))]
+    rows, index, count = np.unique(labels, return_index=True, return_counts=True)
 
-    return labels
+    # sub_dataframe 
+    df_sub = df.drop(df.index[index[count==1].tolist()], inplace=False)
+    for row in rows[count==1]:
+        labels.remove(row)
+
+    return df_sub, labels
 
 def split_data(df, keys, num_iter=3, random_state=0):
-    labels = group_data(df, keys)
-    return StratifiedShuffleSplit(labels, num_iter, test_size=0.5, random_state=random_state)
+    df_sub, labels = group_data(df, keys)
+    return df_sub, StratifiedShuffleSplit(labels, num_iter, test_size=0.5, random_state=random_state)
 
 filename = 'Phenotypic_V1_0b_preprocessed1.csv'
 
@@ -22,14 +26,14 @@ csv = pd.read_csv(filename)
 
 keys = ['AGE_AT_SCAN', 'SITE_ID']
 
-sss = split_data(csv, keys, num_iter=3, random_state=0)
+csv_sub, sss = split_data(csv, keys, num_iter=3, random_state=0)
 
 assess = []
 
 for index_a, index_b in sss:
-    set_a, set_b = csv.iloc[index_a], csv.iloc[index_b]
+    set_a, set_b = csv_sub.iloc[index_a], csv_sub.iloc[index_b]
     set_a.to_csv('split1.csv')
-    set_b.to_csv('split2.csv')        
+    set_b.to_csv('split2.csv')
 
     # image data[index_a/b]
     
