@@ -16,7 +16,9 @@ keys = ['AGE_AT_SCAN', 'SEX']
 for key in keys:
     if 'AGE' in key:    # TODO: better way?
     #if len(df[key].unique())>2:
-            csv[key] = pd.qcut(csv[key], 2, labels=[0,1])
+        key_binary = '%s_binary' % key
+        csv[key_binary] = pd.qcut(df[key], 2, labels=[0,1])
+        keys[i] = key_binary
 
 sss = split_data(csv, keys, num_iter=3, random_state=0)
 print sss
