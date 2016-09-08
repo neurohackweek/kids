@@ -32,9 +32,8 @@ if not os.path.isdir(input_dir):
     print("Could not find input directory %s"%(input_dir))
     sys.exit(1)
 
-if not os.path.isdir(output_dir):
-    print("Could not find output directory %s"%(output_dir))
-    sys.exit(1)
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
 
 df = pd.read_csv(pheno_file)
 colnames = df.keys()
@@ -54,8 +53,16 @@ for i, (index_a, index_b) in enumerate(sss):
     print 'iteration %s' % (i+1)
     set_a, set_b = df.iloc[index_a][[colnames[0],outcome_measure]], df.iloc[index_b][[colnames[0],outcome_measure]]
     
-    set_a.to_csv('split1.csv', index=False)
-    set_b.to_csv('split2.csv', index=False)
+    set_a.to_csv(os.path.join(output_dir,'set1_iteration%s.csv' % (i+1)), index=False)
+    set_b.to_csv(os.path.join(output_dir,'set2_iterations%s.csv' % (i+1)), index=False)
+
+    #os.system("python run.py split1.csv -i %s --train" % output_dir)
+
+    #os.system("python run.py split2.csv -o model1 --test")
+
+    # train on second half, test on first half
+    #os.system("python run.py split2.csv -o model2 --train")
+    #os.system("python run.py split1.csv -o model2 --test")
 
     print '''
     df_result = pd.DataFrame()
