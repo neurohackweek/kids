@@ -26,7 +26,7 @@ def assign_filename(df, base_directory, key_in='FILE_ID', key_out='FILENAME', po
                 for file_id in df[key_in]]
 
 
-filename = 'Phenotypic_V1_0b_preprocessed1.csv'
+csv_filename = 'Phenotypic_V1_0b_preprocessed1.csv'
 basedir = ''
 key_filename = 'FILENAME'
 key_target = 'DX_GROUP'
@@ -35,7 +35,7 @@ num_iter = 3
 # columns to use
 columns = ['subject', 'SITE_ID', 'FILE_ID', 'DX_GROUP', 'SEX', 'AGE_AT_SCAN']
 
-csv = pd.read_csv(filename)
+csv = pd.read_csv(csv_filename)
 df = pd.DataFrame()
 for column in columns:
         df[column] = csv[column]
@@ -72,6 +72,9 @@ for i, (index_a, index_b) in enumerate(sss):
     print '''
     df_result = pd.DataFrame()
     # Model 1
+    run output input split1.csv --train
+    run output input split2.csv --test output/model
+
     model_1a = Method_1.train(set_a)
     model_1b = Method_1.train(set_b)
     
