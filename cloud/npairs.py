@@ -1,15 +1,11 @@
 #!/usr/bin/env python
 
-import argparse
-import pandas as pd
+import argparse, os, sys, commands, re, template_qsub
 from sklearn.cross_validation import StratifiedShuffleSplit
+import pandas as pd
 import numpy as np
-import os
-import sys
-import template_qsub
-import commands
-import re
 
+# generate argument parser object
 parser = argparse.ArgumentParser(description='NPAIRS Framework Runner')
 parser.add_argument('pheno_file', help='File containing the participant'
     'information for the analysis that will be run. This is a CSV with the'
@@ -25,8 +21,10 @@ parser.add_argument('-o','--output_dir', help='The directory where the output '
 parser.add_argument('-n','--n_iter', type=int, help='The number of iterations '
     'of stratified samples to generate.', default=1)
 
+# read in commandline arguments
 args = parser.parse_args()
 
+# set variables based on commandline inputs
 input_dir=args.input_dir.rstrip('/')
 output_dir=args.output_dir.rstrip('/')
 pheno_file=args.pheno_file
@@ -34,39 +32,42 @@ outcome_measure=args.outcome_measure
 methods=args.method.split(',')
 n_iter=args.n_iter
 
+# check phenotype file exists
 if not os.path.isfile(pheno_file):
     print("Could not find pheno file %s"%(pheno_file))
     sys.exit(1)
 
+# check image input directory exists
 if not os.path.isdir(input_dir):
     print("Could not find input directory %s"%(input_dir))
     sys.exit(1)
 
+# make output directory if doesn't already exist
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
+# read in phenotype file
 df = pd.read_csv(pheno_file)
-colnames = df.keys()
 
+# check that the outcome measure is a column in the phenotype file
+colnames = df.keys()
 if outcome_measure not in colnames:
     print("Could not find %s in file %s"%(outcome_measure, pheno_file))
     sys.exit(1)
 
+# create dot product of labels
 labels = [ '.'.join([str(df[key].iloc[i]) for key in colnames[1:]]) for i in range(len(df))]
+
+# create stratified 2fold splits of data
 sss = StratifiedShuffleSplit(labels, n_iter, 0.5)
 
-acc = []
-repro = []
-
-print 'splitting'
-print
-
-if not os.path.exists(output_dir):
-    os.makedirs(output_dir)
-
+# iterate over the number of iterations
 for i, (index_a, index_b) in enumerate(sss):
+
+    # split into 2 sets based on results of stratified splits
     set_a, set_b = df.iloc[index_a][[colnames[0],outcome_measure]], df.iloc[index_b][[colnames[0],outcome_measure]]
 
+    # create appropriate directory structure
     for method in methods:
         iter_dir = os.path.join(output_dir,"%s_iteration%s"%(method,i+1))
 
@@ -76,43 +77,20 @@ for i, (index_a, index_b) in enumerate(sss):
         if not os.path.exists(iter_dir+'_set2'):
             os.makedirs(iter_dir+'_set2')
 
-    #set_a.to_csv(iter_dir+'_set1/subs.csv', index=False)
-    #set_b.to_csv(iter_dir+'_set2/subs.csv', index=False)
+    # save out subject lists for each iteration
     set_a.to_csv(os.path.join(output_dir, 'iteration%s_set1.csv' %(i+1)), index=False)
     set_b.to_csv(os.path.join(output_dir, 'iteration%s_set2.csv' %(i+1)), index=False)
 
+# generate qsub script
 qsub = template_qsub.get_qsub_file(input_dir, output_dir, n_iter,methods)
-
 filename = 'run_jobs.qsub'
-
 with open(filename,'w') as textFile:
     textFile.write(qsub)
 
+# submit qsub script
 out = commands.getoutput('qsub %s' % filename)
 
+# check whether script was successfully submitted
 if re.search(confirm_str, out) == None:
-    err_msg = 'Error submitting %s run to sge queue' % \
-              (config_dict['job_name'])
+    err_msg = 'Error submitting job to queue')
     raise Exception(err_msg)
-
-#print 'training models'
-
-#for n in range(n_iter):
-#    for method in methods:
-#        for i in [1,2]:
-#            pheno_dir = 'iteration'+str(n+1)+'_set'+str(i)+'/'
-#            pheno_file = pheno_dir+'subs.csv'
-#            print "python run.py --pheno_file %s --input_dir %s --train --model_dir %s" % (pheno_file,input_dir,method+'_'+pheno_dir)
-
-#print
-
-#print 'testing models'
-#for n in range(n_iter):
-#    for method in methods:
-#        pheno_file = 'iteration'+str(n+1)+'_set'
-#        set_a = method+'_iteration'+str(n+1)+'_set1/'
-#        set_b = method+'_iteration'+str(n+1)+'_set2/'
-#        print "python run.py --pheno_file %s --input_dir %s --test --model_dir %s" % (pheno_file+'/set1.csv',input_dir, set_b)
-#        print "python run.py --pheno_file %s --input_dir %s --test --model_dir %s" % (pheno_file+'/set2.csv',input_dir, set_a)
-
-#print
