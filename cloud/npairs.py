@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import argparse
 import pandas as pd
 from sklearn.cross_validation import StratifiedShuffleSplit
@@ -12,7 +14,7 @@ parser.add_argument('pheno_file', help='File containing the participant'
     'regressors of no interest in the remaining columns.')
 parser.add_argument('outcome_measure', help='The outcome measure you are '
     'interested in predicting.')
-parser.add_argument('method', help='The name of the classifier you are using.')
+parser.add_argument('method', help='The comma-separated names of the classifiers you are using.')
 parser.add_argument('-i','--input_dir', help='The directory where the input '
     'files (including the phenotype file) are located.', default=os.getcwd())
 parser.add_argument('-o','--output_dir', help='The directory where the output '
@@ -26,7 +28,7 @@ input_dir=args.input_dir.rstrip('/')
 output_dir=args.output_dir.rstrip('/')
 pheno_file=args.pheno_file
 outcome_measure=args.outcome_measure
-method=args.method
+methods=args.method.split(',')
 n_iter=args.n_iter
 
 if not os.path.isfile(pheno_file):
@@ -56,36 +58,44 @@ repro = []
 print 'splitting'
 print
 
-for i, (index_a, index_b) in enumerate(sss):    
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+
+for i, (index_a, index_b) in enumerate(sss):
     set_a, set_b = df.iloc[index_a][[colnames[0],outcome_measure]], df.iloc[index_b][[colnames[0],outcome_measure]]
 
-    iter_dir = os.path.join(output_dir,"%s_iteration%s"%(method,i+1))
+    for method in methods:
+        iter_dir = os.path.join(output_dir,"%s_iteration%s"%(method,i+1))
 
-    if not os.path.exists(iter_dir+'_set1'):
-        os.makedirs(iter_dir+'_set1') 
+        if not os.path.exists(iter_dir+'_set1'):
+            os.makedirs(iter_dir+'_set1')
 
-    if not os.path.exists(iter_dir+'_set2'):
-        os.makedirs(iter_dir+'_set2')   
+        if not os.path.exists(iter_dir+'_set2'):
+            os.makedirs(iter_dir+'_set2')
 
-    set_a.to_csv(iter_dir+'_set1/subs.csv', index=False)
-    set_b.to_csv(iter_dir+'_set2/subs.csv', index=False) 
+    #set_a.to_csv(iter_dir+'_set1/subs.csv', index=False)
+    #set_b.to_csv(iter_dir+'_set2/subs.csv', index=False)
+    set_a.to_csv(os.path.join(output_dir, 'iteration%s_set1.csv' %(i+1)), index=False)
+    set_b.to_csv(os.path.join(output_dir, 'iteration%s_set2.csv' %(i+1)), index=False)
 
 print 'training models'
 
 for n in range(n_iter):
-    for i in [1,2]:
-        pheno_dir = method+'_iteration'+str(n+1)+'_set'+str(i)+'/'
-        pheno_file = pheno_dir+'subs.csv'
-        print "python run.py --pheno_file %s --input_dir %s --train --model_dir %s" % (pheno_file,input_dir,pheno_dir)
+    for method in methods:
+        for i in [1,2]:
+            pheno_dir = method+'_iteration'+str(n+1)+'_set'+str(i)+'/'
+            pheno_file = pheno_dir+'subs.csv'
+            print "python run.py --pheno_file %s --input_dir %s --train --model_dir %s" % (pheno_file,input_dir,pheno_dir)
 
 print
 
 print 'testing models'
 for n in range(n_iter):
-    pheno_file = method+'_iteration'+str(n+1)+'_set'
-    set_a = method+'_iteration'+str(n+1)+'_set1/'
-    set_b = method+'_iteration'+str(n+1)+'_set2/'
-    print "python run.py --pheno_file %s --input_dir %s --test --model_dir %s" % (pheno_file+'/set1.csv',input_dir, set_b)
-    print "python run.py --pheno_file %s --input_dir %s --test --model_dir %s" % (pheno_file+'/set2.csv',input_dir, set_a)
+    for method in methods:
+        pheno_file = method+'_iteration'+str(n+1)+'_set'
+        set_a = method+'_iteration'+str(n+1)+'_set1/'
+        set_b = method+'_iteration'+str(n+1)+'_set2/'
+        print "python run.py --pheno_file %s --input_dir %s --test --model_dir %s" % (pheno_file+'/set1.csv',input_dir, set_b)
+        print "python run.py --pheno_file %s --input_dir %s --test --model_dir %s" % (pheno_file+'/set2.csv',input_dir, set_a)
 
 print
