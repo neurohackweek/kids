@@ -3,7 +3,7 @@
 
 # num_iter=3
 # method_array=("svm" "logistic")
-def get_qsub_file(num_iter=3, methods=['svm', 'logistic'], input_dir, output_dir):
+def get_qsub_file(input_dir, output_dir, num_iter=3, methods=['svm', 'logistic']):
     head = '''#!/bin/bash
 ## SGE batch file
 #$ -S /bin/bash

@@ -6,6 +6,9 @@ from sklearn.cross_validation import StratifiedShuffleSplit
 import numpy as np
 import os
 import sys
+import template_qsub
+import commands
+import re
 
 parser = argparse.ArgumentParser(description='NPAIRS Framework Runner')
 parser.add_argument('pheno_file', help='File containing the participant'
@@ -78,24 +81,38 @@ for i, (index_a, index_b) in enumerate(sss):
     set_a.to_csv(os.path.join(output_dir, 'iteration%s_set1.csv' %(i+1)), index=False)
     set_b.to_csv(os.path.join(output_dir, 'iteration%s_set2.csv' %(i+1)), index=False)
 
-print 'training models'
+qsub = template_qsub.get_qsub_file(input_dir, output_dir, n_iter,methods)
 
-for n in range(n_iter):
-    for method in methods:
-        for i in [1,2]:
-            pheno_dir = 'iteration'+str(n+1)+'_set'+str(i)+'/'
-            pheno_file = pheno_dir+'subs.csv'
-            print "python run.py --pheno_file %s --input_dir %s --train --model_dir %s" % (pheno_file,input_dir,method+'_'+pheno_dir)
+filename = 'run_jobs.qsub'
 
-print
+with open(filename,'w') as textFile:
+    textFile.write(qsub)
 
-print 'testing models'
-for n in range(n_iter):
-    for method in methods:
-        pheno_file = 'iteration'+str(n+1)+'_set'
-        set_a = method+'_iteration'+str(n+1)+'_set1/'
-        set_b = method+'_iteration'+str(n+1)+'_set2/'
-        print "python run.py --pheno_file %s --input_dir %s --test --model_dir %s" % (pheno_file+'/set1.csv',input_dir, set_b)
-        print "python run.py --pheno_file %s --input_dir %s --test --model_dir %s" % (pheno_file+'/set2.csv',input_dir, set_a)
+out = commands.getoutput('qsub %s' % filename)
 
-print
+if re.search(confirm_str, out) == None:
+    err_msg = 'Error submitting %s run to sge queue' % \
+              (config_dict['job_name'])
+    raise Exception(err_msg)
+
+#print 'training models'
+
+#for n in range(n_iter):
+#    for method in methods:
+#        for i in [1,2]:
+#            pheno_dir = 'iteration'+str(n+1)+'_set'+str(i)+'/'
+#            pheno_file = pheno_dir+'subs.csv'
+#            print "python run.py --pheno_file %s --input_dir %s --train --model_dir %s" % (pheno_file,input_dir,method+'_'+pheno_dir)
+
+#print
+
+#print 'testing models'
+#for n in range(n_iter):
+#    for method in methods:
+#        pheno_file = 'iteration'+str(n+1)+'_set'
+#        set_a = method+'_iteration'+str(n+1)+'_set1/'
+#        set_b = method+'_iteration'+str(n+1)+'_set2/'
+#        print "python run.py --pheno_file %s --input_dir %s --test --model_dir %s" % (pheno_file+'/set1.csv',input_dir, set_b)
+#        print "python run.py --pheno_file %s --input_dir %s --test --model_dir %s" % (pheno_file+'/set2.csv',input_dir, set_a)
+
+#print
