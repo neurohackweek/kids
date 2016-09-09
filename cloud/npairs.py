@@ -83,16 +83,16 @@ print 'training models'
 for n in range(n_iter):
     for method in methods:
         for i in [1,2]:
-            pheno_dir = method+'_iteration'+str(n+1)+'_set'+str(i)+'/'
+            pheno_dir = 'iteration'+str(n+1)+'_set'+str(i)+'/'
             pheno_file = pheno_dir+'subs.csv'
-            print "python run.py --pheno_file %s --input_dir %s --train --model_dir %s" % (pheno_file,input_dir,pheno_dir)
+            print "python run.py --pheno_file %s --input_dir %s --train --model_dir %s" % (pheno_file,input_dir,method+'_'+pheno_dir)
 
 print
 
 print 'testing models'
 for n in range(n_iter):
     for method in methods:
-        pheno_file = method+'_iteration'+str(n+1)+'_set'
+        pheno_file = 'iteration'+str(n+1)+'_set'
         set_a = method+'_iteration'+str(n+1)+'_set1/'
         set_b = method+'_iteration'+str(n+1)+'_set2/'
         print "python run.py --pheno_file %s --input_dir %s --test --model_dir %s" % (pheno_file+'/set1.csv',input_dir, set_b)
