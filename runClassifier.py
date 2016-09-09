@@ -18,7 +18,11 @@ import csv
 ######################################
 
 def write_csv(listfile,filename):
-
+	''' Write csv file
+    Args:
+        listfile: A csv file 
+        filename: path for output file name
+    '''
 	print('Writing to csv file:', filename)
 	with open(filename, 'w') as f:
 		f.writelines(listfile)
@@ -28,9 +32,16 @@ def write_csv(listfile,filename):
 #####################################
 
 def get_features_mtx(pheno_file, mask_img,input_dir,output_path):
+    ''' Convert fMRI dreivatives to voxel wise features using only brain tissue voxels
+    Args:
+        pheno_file: A csv file with 2 columns, first containing subject IDs and second containing labels/dx
+        mask_img: 3D nii file for separating brain from non-brain voxels 
+        input_dir: path of input directory containing all image files
+        output_path: path of output directory. Will write csv of missing data
+    '''
 # get the feature matrix X, true values Y, mask image
-	missing_data=['subjects\n']
-	fnames=[]
+    missing_data=['subjects\n']
+    fnames=[]
 	phenos = pd.read_csv(pheno_file,index_col=0)
 
 	print('Parsing files')
