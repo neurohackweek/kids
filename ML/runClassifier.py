@@ -17,20 +17,6 @@ import csv
 #Functions
 ######################################
 
-def write_csv(listfile,filename):
-    ''' Write csv file
-    Args:
-        listfile: A csv file 
-        filename: path for output file name
-    '''
-    print('Writing to csv file:', filename)
-    with open(filename, 'w') as f:
-        f.writelines(listfile)
-
-    return
-
-#####################################
-
 def get_features_mtx(pheno_file, mask_img,input_dir,output_path):
     ''' Convert fMRI dreivatives to voxel wise features using only brain tissue voxels
     Args:
@@ -40,7 +26,7 @@ def get_features_mtx(pheno_file, mask_img,input_dir,output_path):
         output_path: path of output directory. Will write csv of missing data
     '''
 # get the feature matrix X, true values Y, mask image
-    missing_data=['subjects\n']
+    missing_data=[]
     fnames=[]
     phenos = pd.read_csv(pheno_file,index_col=0)
 
@@ -50,7 +36,7 @@ def get_features_mtx(pheno_file, mask_img,input_dir,output_path):
             f = glob.glob(os.path.join(input_dir,'*%s*.nii.gz' % ss))[0]
             fnames.append(f)
         except:
-            missing_data.append(str(ss)+'\n')
+            missing_data.append(ss)
 
 
     trimmed_phenos = phenos[~phenos.index.isin(missing_data)]
@@ -63,10 +49,12 @@ def get_features_mtx(pheno_file, mask_img,input_dir,output_path):
     # only brain functional voxels
     X=masker.fit_transform(fnames)
 
+    assert len(Y) == X.shape[0]
     
     print('Final feature matrix contains %d subjects and %d features' % (X.shape[0], X.shape[1]))
     
-    write_csv(missing_data,os.path.join(output_path,'missing_data.csv'))
+    np.savetxt(os.path.join(output_path,'missing_data.txt'),np.array([missing_data]), delimiter='\n',newline=os.linesep)
+    
     return X,Y,masker
 
 ########################################
@@ -131,6 +119,7 @@ def trainModel(data, labels, classifier,modelDir,cv=True,k=5,masker=None,sparse=
         modelIntercept = clf.intercept_
     
     if saveData:
+        print "Saving model weights, training accuracy and weights nii file"
         from sklearn.externals import joblib
         #Write intercept + model weights to csv and weight image to nii
         fileName = os.path.join(modelDir,classifier)
@@ -194,8 +183,8 @@ def run(command, env={}):
 
 # Get arguments
 parser = argparse.ArgumentParser(description='ABIDE Classifier Model')
-parser.add_argument('--pheno_file', help='File containing the participant'
-    'information for the analysis that will be run. This is a CSV with the'
+parser.add_argument('--pheno_file', help='File containing the participant '
+    'information for the analysis that will be run. This is a CSV with the '
     'participant id in the first column, the diagnosis in the'
     'second column.', required=True)
 parser.add_argument('--input_dir', help='Directory with subject files', required=True)
@@ -206,7 +195,7 @@ parser.add_argument('--mask', help='Mask for non-zero brain tissue. Needs comple
 parser.add_argument('--train', action='store_true')
 parser.add_argument('--test', action='store_true')
 parser.add_argument('--noCV',action='store_false',default=True, help='Indicate whether CV should be NOT used to tune hyperparameters and use sklearn defaults instead')
-parser.add_argument('--k',default=5, help='Indicate number of CV folds to use during hyper-parameter tuning; defaults to 5; ignored if --noCV is passed')
+parser.add_argument('--k',default=5, help='Indicate number of CV folds to use during hyper-parameter tuning; defaults to 5 but ignored if --noCV is passed')
 parser.add_argument('--sparse',action='store_true',default=False, help='Indicate whether a sparse model should be fit using L1 regularization; defaults to L2')
 parser.add_argument('--nosave',action='store_false',default=True, help='Indicate whether models should be estimated but no files should be written; mostly for debugging')
 
@@ -268,6 +257,7 @@ if args.train:
 
 elif args.test:
     # Test a previously trained model
+    print('Testing previously trained %s model' % args.model)
     testModel(X,Y,classifier,model_path,output_path,saveData=args.nosave)
     
 
