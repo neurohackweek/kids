@@ -13,14 +13,15 @@ from ipywidgets import interact
 
 output_notebook()
 
-def plot_motion_results(df, x, y, variance):
+def plot_motion_results(df, x, y, variance, xlabel, ylabel):
     """
     This function should plot a plot with widgets.
     
     Args:
-        df (Pandas data frame): This is the filename to a pandas data frame.
+        df (Pandas data frame): This is the filename to a pandas data frame. df MUST include columns named `SampleSize`, `LowerAge`, `UpperAge`.
         x (str): Name of the column for the x axis
         y (str): Name of the column for the y axis
+        variance (str): Name of the column for the error bar (it is the full width, not half).
     Returns:
         None    
     """
@@ -35,10 +36,10 @@ def plot_motion_results(df, x, y, variance):
     }
     diagnosis_dict.keys()
     def get_dataset(src, diagnosis, age_range):
-        src['ci'] = zip(src.func_perc_fd + 5, src.func_perc_fd - 5)
-        src['ci_x'] = zip(src.AGE_AT_SCAN, src.AGE_AT_SCAN)
+        src['ci'] = zip(src[y] + src[variance]/2, src[y] - src[variance]/2)
+        src['ci_x'] = zip(src[x], src[x])
         df = src[src.DSM_IV_TR == diagnosis_dict[diagnosis]].copy()
-        df = df.set_index(['AGE_AT_SCAN'])
+        df = df.set_index([x])
         df.sort_index(inplace=True)
         return ColumnDataSource(data=df)
     def make_plot(source, title):
@@ -46,12 +47,12 @@ def plot_motion_results(df, x, y, variance):
         plot.title.text = title
         colors = Blues4[0:3]
 
-        plot.scatter(x='AGE_AT_SCAN', y='func_perc_fd', source=source)
+        plot.scatter(x=x, y=y, source=source)
         plot.multi_line('ci_x', 'ci', source=source)
 
         # fixed attributes
-        plot.xaxis.axis_label = "Age at scan (y)"
-        plot.yaxis.axis_label = "Percent Frame Displacement Exceeding Threshold"
+        plot.xaxis.axis_label = xlabel
+        plot.yaxis.axis_label = ylabel
         plot.axis.major_label_text_font_size = "8pt"
         plot.axis.axis_label_text_font_size = "8pt"
         plot.axis.axis_label_text_font_style = "bold"
