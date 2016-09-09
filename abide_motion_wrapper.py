@@ -1,0 +1,185 @@
+#!/usr/bin/env python
+
+import numpy as np
+import os
+import pandas as pd
+import sys
+
+if __name__ == "__main__":
+    motion_thresh = sys.argv[1]
+    age_l = sys.argv[2]
+    age_u = sys.argv[3]
+    n = sys.argv[4]
+    n_perms = sys.argv[5]
+
+    abide_motion_wrapper(motion_thresh, age_l, age_u, n, n_perms=1000)
+
+
+def abide_motion_wrapper(motion_thresh, age_l, age_u, n, n_perms=1000):
+    behav_data_f = '../Phenotypic_V1_0b_preprocessed1.csv'
+       
+    df = amw.read_in_data(behav_data_f)
+
+    rsq_list = amw.split_half_outcome(df, motion_thresh, age_l, age_u, n, n_perms=n_perms)
+
+    med_rsq = np.median(rsq_list)
+    rsq_CI = np.percentile(rsq_list, 97.5) - np.percentile(rsq_list, 2.5)
+
+    columns = [ 'motion_thresh', 'rsq', 'CI_95', 'n', 'age_l', 'age_u' ]
+    results_df = pd.DataFrame(np.array([[motion_thresh, age_l, age_u, n, mean_rsq, rsq_CI]]), 
+                                  columns=columns)
+
+    f_name = '../RESULTS/rsq_{}pct_{}subs_{}to{}.csv'.format(motion_thresh, n, age_l, age_u)
+
+    results_df.to_csv(f_name)
+
+    
+def read_in_data(behav_data_f):
+    """
+    Read in the data
+    """
+    df = pd.read_csv(behav_data_f)
+    df = df.loc[df['func_perc_fd'].notnull(), :]
+    df = df.loc[df['FILE_ID']!='no_filename', :]
+    df['AGE_YRS'] = np.floor(df['AGE_AT_SCAN'])
+
+    return df
+
+
+def split_half_outcome(df, motion_thresh, age_l, age_u, n, n_perms=100):
+    
+    """
+    This function returns the R squared of how each parameter affects split-half reliability!
+    It takes in a dataframe, motion threshold, an age upper limit(age_u) an age lower limit (age_l), sample size (n),
+    and number of permutations (n_perms, currently hard coded at 100). This function essentially splits a data frame 
+    into two matched samples (split_two_matched_samples.py), then creates mean roi-roi correlation matrices per sample 
+    (make_group_corr_mat.py) and then calculates the R squared (calc_rsq.py) between the two samples'
+    correlation matrices and returns all the permuation coefficients of determinations in a dataframe.
+    """
+    
+    #set up data frame of average R squared to fill up later
+    Rsq_list = []
+    
+    #Do this in each permutation
+    for i in range(n_perms):
+        #create two matched samples split on motion_thresh, age upper, age lower, and n
+        df_A, df_B = split_two_matched_samples(df, motion_thresh, age_l, age_u, n)
+        #make the matrix of all subjects roi-roi correlations, make the mean corr mat, and make covariance cor mat
+        #do this for A and then B
+        all_corr_mat_A, av_corr_mat_A, var_corr_mat_A = make_group_corr_mat(df_A)
+        all_corr_mat_B, av_corr_mat_B, var_corr_mat_B = make_group_corr_mat(df_B)
+        
+        #calculate the R squared between the two matrices
+        Rsq = calc_rsq(av_corr_mat_A, av_corr_mat_B)
+
+        #build up R squared output
+        Rsq_list += [Rsq]
+    
+    return np.array(Rsq_list)
+
+
+def calc_rsq(av_corr_mat_A, av_corr_mat_B):
+    """
+    From wikipedia: https://en.wikipedia.org/wiki/Coefficient_of_determination
+    
+    Rsq = 1 - (SSres / SStot)
+    
+    SSres is calculated as the sum of square errors (where the error
+    is the difference between x and y).
+    
+    SStot is calculated as the total sum of squares in y.
+    """
+    # Get the data we need
+    inds = np.triu_indices_from(av_corr_mat_B, k=1)
+    x = av_corr_mat_A[inds]
+    y = av_corr_mat_B[inds]
+    
+    # Calculate the error/residuals
+    res = y - x
+
+    SSres = np.sum(res**2)
+    
+    # Sum up the total error in y
+    y_var = y - np.mean(y)
+    
+    SStot = np.sum(y_var**2)
+    
+    # R squared
+    Rsq = 1 - (SSres/SStot)
+    
+    return Rsq
+
+
+def make_group_corr_mat(df):
+    """
+    This function reads in each subject's aal roi time series files and creates roi-roi correlation matrices
+    for each subject and then sums them all together. The final output is a 3d matrix of all subjects 
+    roi-roi correlations, a mean roi-roi correlation matrix and a roi-roi covariance matrix.
+    """
+
+    # for each subject do the following
+    
+    for i, (sub, f_id) in enumerate(df[['SUB_ID', 'FILE_ID']].values):
+        
+        #read each subjects aal roi time series files
+        ts_df = pd.read_table('../DATA/{}_rois_aal.1D'.format(f_id))
+
+        #create a correlation matrix from the roi all time series files
+        corr_mat = ts_df.corr()
+        
+        #for the first subject, add a correlation matrix of zeros that is the same dimensions as the aal roi-roi matrix
+        if i == 0:
+            all_corr_mat = np.zeros([corr_mat.shape[0], corr_mat.shape[1], len(df)])
+
+        #now add the correlation matrix you just created for each subject to the all_corr_mat matrix (3D)
+        all_corr_mat[:, :, i] = corr_mat
+    
+    #create the mean correlation matrix (ignore nas - sometime there are some...)
+    av_corr_mat = np.nanmean(all_corr_mat, axis=2)
+    #create the group covariance matrix (ignore nas - sometime there are some...)
+    var_corr_mat = np.nanvar(all_corr_mat, axis=2)
+        
+    return all_corr_mat, av_corr_mat, var_corr_mat
+
+
+def split_two_matched_samples(df, motion_thresh, age_l, age_u, n):
+    """
+    This function takes in a data frame, thresholds it to only include
+    participants whose percentage bad frames are less than motion_thresh
+    and participants who are between the lower and upper age limits (inclusive),
+    then returns two matched samples of size n. The samples are matched on
+    age in years, autism diagnosis, gender and scanning site.
+    """
+
+    # Start by removing all participants whos data is below a certain
+    # motion threshold.
+    df_samp_motion = df.loc[df['func_perc_fd']<motion_thresh, :]
+
+    # Then remove participants who are younger (in years) than age_l and older
+    # than age_u. Note that this means people who are age_l and age_u
+    # (eg 6 and 10) will be included in the sample.
+    df_samp = df_samp_motion.loc[(df_samp_motion['AGE_YRS']>=age_l)
+                                    & (df_samp_motion['AGE_YRS']<=age_u), :]
+
+    # Shuffle these remaining participants to ensure you get different sub
+    # samples each time you run the code.
+    df_samp_rand = df_samp.reindex(np.random.permutation(df_samp.index))
+
+    # Only keep the top 2*n participants.
+    df_samp_2n = df_samp_rand.iloc[:2*n, :]
+
+    # Sort these participants according to the sort columns of interest
+    sort_column_list = ['DSM_IV_TR', 'DX_GROUP', 'SITE_ID', 'SEX', 'AGE_YRS']
+    df_samp_2n_sorted = df_samp_2n.sort_values(by=sort_column_list)
+
+    # Now put all even numbered participants in group A and all odd numbered
+    # participants in group B.
+    df_grp_A = df_samp_2n_sorted.iloc[::2, :]
+    df_grp_B = df_samp_2n_sorted.iloc[1::2, :]
+
+    # Boom! Return these two data frames
+    return df_grp_A, df_grp_B
+
+
+
+
