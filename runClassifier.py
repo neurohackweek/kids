@@ -253,7 +253,7 @@ if args.train:
     X,Y,masker = get_features_mtx(pheno_file,mask_img,input_dir,output_path)
 
     # Train the model based on subject and feature matrix
-    clf = trainModel(X,Y,classifier,model_path,cv=args.noCV,k=args.k,sparse=args.sparse,saveData=args.nosave)
+    clf = trainModel(X,Y,classifier,model_path,cv=args.noCV,k=args.k,sparse=args.sparse,saveData=args.nosave,masker=masker)
 
 elif args.test:
     # Test a previously trained model
