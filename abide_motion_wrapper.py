@@ -5,31 +5,22 @@ import os
 import pandas as pd
 import sys
 
-if __name__ == "__main__":
-    motion_thresh = sys.argv[1]
-    age_l = sys.argv[2]
-    age_u = sys.argv[3]
-    n = sys.argv[4]
-    n_perms = sys.argv[5]
-
-    abide_motion_wrapper(motion_thresh, age_l, age_u, n, n_perms=1000)
-
 
 def abide_motion_wrapper(motion_thresh, age_l, age_u, n, n_perms=1000):
     behav_data_f = '../Phenotypic_V1_0b_preprocessed1.csv'
        
-    df = amw.read_in_data(behav_data_f)
+    df = read_in_data(behav_data_f)
 
-    rsq_list = amw.split_half_outcome(df, motion_thresh, age_l, age_u, n, n_perms=n_perms)
+    rsq_list = split_half_outcome(df, motion_thresh, age_l, age_u, n, n_perms=n_perms)
 
     med_rsq = np.median(rsq_list)
     rsq_CI = np.percentile(rsq_list, 97.5) - np.percentile(rsq_list, 2.5)
 
-    columns = [ 'motion_thresh', 'rsq', 'CI_95', 'n', 'age_l', 'age_u' ]
-    results_df = pd.DataFrame(np.array([[motion_thresh, age_l, age_u, n, mean_rsq, rsq_CI]]), 
+    columns = [ 'motion_thresh', 'age_l', 'age_u', 'n', 'med_rsq', 'CI_95' ]
+    results_df = pd.DataFrame(np.array([[motion_thresh, age_l, age_u, n, med_rsq, rsq_CI]]), 
                                   columns=columns)
 
-    f_name = '../RESULTS/rsq_{}pct_{}subs_{}to{}.csv'.format(motion_thresh, n, age_l, age_u)
+    f_name = '../RESULTS/rsq_{:03.0f}pct_{:03.0f}subs_{:02.0f}to{:02.0f}.csv'.format(motion_thresh, n, age_l, age_u)
 
     results_df.to_csv(f_name)
 
@@ -153,7 +144,7 @@ def split_two_matched_samples(df, motion_thresh, age_l, age_u, n):
 
     # Start by removing all participants whos data is below a certain
     # motion threshold.
-    df_samp_motion = df.loc[df['func_perc_fd']<motion_thresh, :]
+    df_samp_motion = df.loc[df['func_perc_fd'] < motion_thresh, :]
 
     # Then remove participants who are younger (in years) than age_l and older
     # than age_u. Note that this means people who are age_l and age_u
@@ -181,5 +172,14 @@ def split_two_matched_samples(df, motion_thresh, age_l, age_u, n):
     return df_grp_A, df_grp_B
 
 
+
+if __name__ == "__main__":
+    motion_thresh = np.float(sys.argv[1])
+    age_l = np.float(sys.argv[2])
+    age_u = np.float(sys.argv[3])
+    n = np.int(sys.argv[4])
+    n_perms = np.int(sys.argv[5])
+
+    abide_motion_wrapper(motion_thresh, age_l, age_u, n, n_perms=n_perms)
 
 
