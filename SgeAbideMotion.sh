@@ -12,10 +12,9 @@
 #$ -j y
 #$ -V
 # Defines path to the python code you want to run 
-Code=/path/to/Abid_Motion.py
-# Defines the input argument needed (if any) for the code to run from input 2
+Code="~/abide_motion_wrapper.py"
+# Defines motion threshold from input 1
 motion_thresh=$1
-# Defines the output argument needed (if any) for the code to run from input 3
 age_l=$2
 age_u=$3
 n=$4
