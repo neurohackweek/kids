@@ -241,23 +241,23 @@ if not args.model:
 else:
     classifier=args.model
 
+#Read input directory
+input_dir = args.input_dir
+
+# Get X or voxel wise features and Y for the classifier function in the sci-kit learn format
+#subj_ids = np.genfromtxt(args.pheno_file, usecols=0, delimiter=',', skip_header=1, dtype='str')
+X,Y,masker = get_features_mtx(pheno_file,mask_img,input_dir,output_path)
+
 
 #########################################
 if args.train:
     print('Training new %s' % args.model)
-    #Read input directory
-    input_dir = args.input_dir
-
-    # Get X or voxel wise features and Y for the classifier function in the sci-kit learn format
-    #subj_ids = np.genfromtxt(args.pheno_file, usecols=0, delimiter=',', skip_header=1, dtype='str')
-    X,Y,masker = get_features_mtx(pheno_file,mask_img,input_dir,output_path)
-
     # Train the model based on subject and feature matrix
     clf = trainModel(X,Y,classifier,model_path,cv=args.noCV,k=args.k,sparse=args.sparse,saveData=args.nosave,masker=masker)
 
 elif args.test:
     # Test a previously trained model
-    testModel(X,Y,classifier,model_path,out_dir,saveData=arg.nosave)
+    testModel(X,Y,classifier,model_path,output_path,saveData=args.nosave)
     
 
 #########################################
