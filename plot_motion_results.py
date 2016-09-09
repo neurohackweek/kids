@@ -9,65 +9,70 @@ from bokeh.models import ColumnDataSource, DataRange1d, Range1d, VBox, HBox, Sel
 from bokeh.palettes import Blues4
 from bokeh.plotting import Figure, show
 from scipy.signal import savgol_filter
-from ipywidgets import interact
+from ipywidgets import interact, FloatSlider
 
 output_notebook()
 
-def plot_motion_results(df, x, y, variance, xlabel, ylabel):
-    """
-    This function should plot a plot with widgets.
+def get_dataset(src, samplesize, lowerage, upperage):
+    src['ci'] = zip(src[y] + src[variance]/2, src[y] - src[variance]/2)
+    src['ci_x'] = zip(src[x], src[x])
+    df = src[(src.SampleSize == int(samplesize)) & (src.LowerAge >= int(lowerage)) & (src.UpperAge <= int(upperage))].copy()
+    df = df.set_index([x])
+    df.sort_index(inplace=True)
+    return ColumnDataSource(data=df)
+
+def make_plot(source, title):
+    plot = Figure(plot_width=800, plot_height=600, tools="", toolbar_location=None)
+    plot.title.text = title
+    colors = Blues4[0:3]
+
+    plot.scatter(x=x, y=y, source=source)
+    plot.multi_line('ci_x', 'ci', source=source)
+
+    # fixed attributes
+    plot.xaxis.axis_label = xlabel
+    plot.yaxis.axis_label = ylabel
+    plot.axis.major_label_text_font_size = "8pt"
+    plot.axis.axis_label_text_font_size = "8pt"
+    plot.axis.axis_label_text_font_style = "bold"
+
+    return plot
+def update_plot(N, min_age, max_age):
+    plot.title.text = "Motion for sample size " + str(N) + ", ages " + str(min_age) + "-" + str(max_age)
+    src = get_dataset(df, N, min_age, max_age)
+    source.data.update(src.data)
+    push_notebook()
     
-    Args:
-        df (Pandas data frame): This is the filename to a pandas data frame. df MUST include columns named `SampleSize`, `LowerAge`, `UpperAge`.
-        x (str): Name of the column for the x axis
-        y (str): Name of the column for the y axis
-        variance (str): Name of the column for the error bar (it is the full width, not half).
-    Returns:
-        None    
-    """
-        #for col in df.columns:
-    #    print(col)
-    diagnosis_dict = {
-        "Control" : 0,
-        "Autism" : 1,
-        "Aspergers" : 2,
-        "PDD-NOS" : 3,
-        "Aspergers or PDD-NOS" : 4
-    }
-    diagnosis_dict.keys()
-    def get_dataset(src, diagnosis, age_range):
-        src['ci'] = zip(src[y] + src[variance]/2, src[y] - src[variance]/2)
-        src['ci_x'] = zip(src[x], src[x])
-        df = src[src.DSM_IV_TR == diagnosis_dict[diagnosis]].copy()
-        df = df.set_index([x])
-        df.sort_index(inplace=True)
-        return ColumnDataSource(data=df)
-    def make_plot(source, title):
-        plot = Figure(plot_width=800, plot_height=600, tools="", toolbar_location=None)
-        plot.title.text = title
-        colors = Blues4[0:3]
+samplesize = df.SampleSize.max()
+lowerage = df.LowerAge.min()
+upperage = df.UpperAge.max()
 
-        plot.scatter(x=x, y=y, source=source)
-        plot.multi_line('ci_x', 'ci', source=source)
+def getspacing(alist):
+    azip=zip(alist[1:], alist[:-1])
+    thediffs=[q[0]-q[1] for q in azip]
+    uniquediffs=list(set(thediffs))
+    nonzerodiffs=uniquediffs[uniquediffs != 0]
+    if (hasattr(nonzerodiffs, '__len__')) or (isinstance(nonzerodiffs, str)):
+        nonzerodiffs=-1
+    return(nonzerodiffs)
+sampleSpacing=getspacing(df.SampleSize)
 
-        # fixed attributes
-        plot.xaxis.axis_label = xlabel
-        plot.yaxis.axis_label = ylabel
-        plot.axis.major_label_text_font_size = "8pt"
-        plot.axis.axis_label_text_font_size = "8pt"
-        plot.axis.axis_label_text_font_style = "bold"
+samplesize_widget = FloatSlider(min=df.SampleSize.min(), max=df.SampleSize.max(), step=sampleSpacing, value=samplesize)
+lowerage_widget = FloatSlider(min=df.LowerAge.min(), max=df.LowerAge.max(), step=1, value=lowerage)
+upperage_widget = FloatSlider(min=df.UpperAge.min(), max=df.UpperAge.max(), step=1, value=upperage)
 
-        return plot
-    def update_plot(diagnosis, age_range):
-        plot.title.text = diagnosis
-        src = get_dataset(df, diagnosis, age_range)
-        source.data.update(src.data)
-        push_notebook()
-    diagnosis = 'Control'
-    age_range = 6
-    source = get_dataset(df, diagnosis, age_range)
-    plot = make_plot(source, diagnosis)
-    layout = column(plot)
-    show(layout, notebook_handle=True)
-    interact(update_plot, diagnosis=diagnosis_dict.keys(), age_range=(6,19,2))
-    
+def update_upperage_range(*args):
+    if lowerage_widget.value > upperage_widget.value:
+        upperage_widget.value = lowerage_widget.value
+lowerage_widget.observe(update_upperage_range, 'value')
+def update_lowerage_range(*args):
+    if upperage_widget.value < lowerage_widget.value:
+        lowerage_widget.value = upperage_widget.value
+upperage_widget.observe(update_lowerage_range, 'value')
+
+source = get_dataset(df, samplesize, lowerage, upperage)
+plot = make_plot(source, "Motion for sample size " + str(samplesize) + ", ages " + str(lowerage) + "-" + str(upperage))
+show(plot, notebook_handle=True)
+
+interact(update_plot, N=samplesize_widget, min_age=lowerage_widget, max_age=upperage_widget)
+
