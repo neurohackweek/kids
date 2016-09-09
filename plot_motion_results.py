@@ -59,13 +59,6 @@ upperage = df.UpperAge.max()
 
 source = get_dataset(df, samplesize, lowerage, upperage)
 plot = make_plot(source, "Motion for sample size " + str(samplesize) + ", ages " + str(lowerage) + "-" + str(upperage))
-show(plot, notebook_handle=True)
-return(plot)
-
-
-samplesize = df.SampleSize.max()
-lowerage = df.LowerAge.min()
-upperage = df.UpperAge.max()
 
 sampleSpacing=getspacing(df.SampleSize)
 
@@ -81,6 +74,8 @@ def update_lowerage_range(*args):
     if upperage_widget.value < lowerage_widget.value:
         lowerage_widget.value = upperage_widget.value
 upperage_widget.observe(update_lowerage_range, 'value')
+
+show(plot, notebook_handle=True)
 interact(update_plot, N=samplesize_widget, min_age=lowerage_widget, max_age=upperage_widget)
 
     
