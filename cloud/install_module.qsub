@@ -1,0 +1,14 @@
+#!/bin/bash
+## SGE batch file
+#$ -S /bin/bash
+#$ -N install_python_modules
+#$ -t 1-12
+#$ -V
+#$ -cwd
+
+source activate cpac
+
+pip install -q scikit-learn
+#conda install -q -y scikit-learn
+pip install nilearn
+
