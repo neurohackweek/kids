@@ -51,14 +51,15 @@ def get_features_mtx(pheno_file, mask_img,input_dir,output_path):
 	print('Generating feature matrix nsubjects x voxels')
 	# only brain functional voxels
 	X=masker.fit_transform(fnames)
+
     
-    print('Final feature matrix contains %d subjects and %d features', % (X.shape[0], X.shape[1]))
+	print('Final feature matrix contains %d subjects and %d features' % (X.shape[0], X.shape[1]))
     
 	write_csv(missing_data,os.path.join(output_path,'missing_data.csv'))
 	return X,Y,masker
 
 ########################################
-def trainModel(data, labels, classifier,modelDir,cv=True,k=5,masker=masker,sparse= False,saveData=True):
+def trainModel(data, labels, classifier,modelDir,cv=True,k=5,masker=None,sparse= False,saveData=True):
     
     ''' Train a linear classifier and save the model weights to a csv file, nii image and pickle the model.
     Args:
@@ -194,7 +195,7 @@ parser.add_argument('--mask', help='Mask for non-zero brain tissue. Needs comple
 parser.add_argument('--train', action='store_true')
 parser.add_argument('--test', action='store_true')
 parser.add_argument('--noCV',action='store_false',default=True, help='Indicate whether CV should be NOT used to tune hyperparameters and use sklearn defaults instead')
-parser.add_argument('--k',,default=5, help='Indicate number of CV folds to use during hyper-parameter tuning; defaults to 5; ignored if --noCV is passed')
+parser.add_argument('--k',default=5, help='Indicate number of CV folds to use during hyper-parameter tuning; defaults to 5; ignored if --noCV is passed')
 parser.add_argument('--sparse',action='store_true',default=False, help='Indicate whether a sparse model should be fit using L1 regularization; defaults to L2')
 parser.add_argument('--nosave',action='store_false',default=True, help='Indicate whether models should be estimated but no files should be written; mostly for debugging')
 
@@ -230,7 +231,7 @@ else:
     input_path=os.path.abspath(args.input_dir)
     
 # Check for model directory
-if not os.path.exists(args.model):
+if not os.path.exists(args.model_dir):
     parser.error('Need model Directory!')
 else:
     model_path=os.path.abspath(args.model_dir)
@@ -243,20 +244,20 @@ else:
 
 #########################################
 if args.train:
-	print('Training new %s' % args.model)
+    print('Training new %s' % args.model)
     #Read input directory
     input_dir = args.input_dir
 
     # Get X or voxel wise features and Y for the classifier function in the sci-kit learn format
     #subj_ids = np.genfromtxt(args.pheno_file, usecols=0, delimiter=',', skip_header=1, dtype='str')
-    X,Y,masker = get_features_mtx(pheno_file,mask_img,output_path)
+    X,Y,masker = get_features_mtx(pheno_file,mask_img,input_dir,output_path)
 
     # Train the model based on subject and feature matrix
-    clf = trainModel(X,Y,classifier,model_dir,cv=args.noCV,k=args.k,sparse=args.sparse,saveData=args.nosave)
+    clf = trainModel(X,Y,classifier,model_path,cv=args.noCV,k=args.k,sparse=args.sparse,saveData=args.nosave)
 
-elif args.test
+elif args.test:
     # Test a previously trained model
-    testModel(X,Y,classifier,model_dir,out_dir,saveData=arg.nosave)
+    testModel(X,Y,classifier,model_path,out_dir,saveData=arg.nosave)
     
 
 #########################################
