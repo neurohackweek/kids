@@ -19,6 +19,7 @@ age_l=$2
 age_u=$3
 n=$4
 n_perms=$5
+overwrite=$6
 echo Running $Code
 date
-python $Code $motion_thresh $age_l $age_u $n $n_perms
+python $Code $motion_thresh $age_l $age_u $n $n_perms $overwrite

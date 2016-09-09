@@ -6,9 +6,20 @@ import pandas as pd
 import sys
 
 
-def abide_motion_wrapper(motion_thresh, age_l, age_u, n, n_perms=1000):
+def abide_motion_wrapper(motion_thresh, age_l, age_u, n, n_perms=1000, overwrite=True):
     behav_data_f = '../Phenotypic_V1_0b_preprocessed1.csv'
        
+    f_name = '../RESULTS/rsq_{:03.0f}pct_{:03.0f}subs_{:02.0f}to{:02.0f}.csv'.format(motion_thresh, n, age_l, age_u)
+    
+    # By default this code will recreate files even if they already exist
+    # (overwrite=True)
+    # If you don't want to do this though, set overwrite to False and 
+    # this step will skip over the analysis if the file already exists
+    if not overwrite:
+        # If the file exists then skip this loop
+        if os.path.isfile(f_name):
+            return
+    
     df = read_in_data(behav_data_f)
 
     rsq_list = split_half_outcome(df, motion_thresh, age_l, age_u, n, n_perms=n_perms)
@@ -20,7 +31,6 @@ def abide_motion_wrapper(motion_thresh, age_l, age_u, n, n_perms=1000):
     results_df = pd.DataFrame(np.array([[motion_thresh, age_l, age_u, n, med_rsq, rsq_CI]]), 
                                   columns=columns)
 
-    f_name = '../RESULTS/rsq_{:03.0f}pct_{:03.0f}subs_{:02.0f}to{:02.0f}.csv'.format(motion_thresh, n, age_l, age_u)
 
     results_df.to_csv(f_name)
 
@@ -179,7 +189,16 @@ if __name__ == "__main__":
     age_u = np.float(sys.argv[3])
     n = np.int(sys.argv[4])
     n_perms = np.int(sys.argv[5])
+    overwrite = np.int(sys.argv[6])
 
-    abide_motion_wrapper(motion_thresh, age_l, age_u, n, n_perms=n_perms)
+    if overwrite == 1:
+        overwrite = True
+    elif overwrite == 0:
+        overwrite = False
+    else:
+        print 'invalid option for overwrite, EXITING'
+        sys.exit()
+        
+    abide_motion_wrapper(motion_thresh, age_l, age_u, n, n_perms=n_perms, overwrite=overwrite)
 
 
