@@ -1,7 +1,9 @@
+# iteration1_set1.csv
+# method_iteration1_set1
 
 # num_iter=3
 # method_array=("svm" "logistic")
-def get_qsub_file(num_iter=3, methods=['svm', 'logistic']):
+def get_qsub_file(num_iter=3, methods=['svm', 'logistic'], input_dir, output_dir):
     head = '''#!/bin/bash
 ## SGE batch file
 #$ -S /bin/bash
@@ -10,9 +12,12 @@ def get_qsub_file(num_iter=3, methods=['svm', 'logistic']):
 #$ -V
 #$ -cwd
 
+input_dir=%s
+output_base=%s
+
 num_itr=%s
 declare -a method_array=%s
-''' % (num_iter, '(%s)' % ' '.join(['"%s"' % tmp for tmp in methods]))
+''' % (input_dir, output_dir, num_iter, '(%s)' % ' '.join(['"%s"' % tmp for tmp in methods]))
     tail = '''
 num_set=2
 num_method=${#method_array[@]}
@@ -29,12 +34,10 @@ method=${method_array[$method_index-1]}
 let test_set_number=3-$set_number
 
 pgm="python runClassifier.py"
-input_dir=../input/reho
-output_base=../output/out
-output_dir=${output_base}/${method}_set${set_number}_iteration${itr_number}
+output_dir=${output_base}/${method}_iteration${itr_number}_set${set_number}
 mask=../input/MNI3mm.nii.gz
-csv_file="${output_base}/set${set_number}_iteration${itr_number}.csv"
-test_csv_file="${output_base}/set${test_set_number}_iteration${itr_number}.csv"
+csv_file="${output_base}/iteration${itr_number}_set${set_number}.csv"
+test_csv_file="${output_base}/iteration${itr_number}_set${test_set_number}.csv"
 
 echo $method, itr $itr_number, set $set_number, testset $test_set_number, csv $csv_file, testcsv $test_csv_file
 
