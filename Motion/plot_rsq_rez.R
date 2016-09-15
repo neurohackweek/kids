@@ -1,12 +1,11 @@
 library(ggplot2)
-library(knitr)
 #check how percent and mean fd are related:
-aDF <- read.csv('./Phenotypic_V1_0b_preprocessed1.csv')
+aDF <- read.csv('../../Phenotypic_V1_0b_preprocessed1.csv')
 aplot <- ggplot(aDF, aes(y=func_mean_fd, x=func_perc_fd))+
 	geom_point(alpha=.3)+
 	geom_smooth()
 print(aplot)
-ggsave(aplot, filename='mean_by_perc_fd.png',  width=10, height=10, units='in', dpi=150) 
+#ggsave(aplot, filename='mean_by_perc_fd.png',  width=10, height=10, units='in', dpi=150) 
 
 #+ "load-data"
 
