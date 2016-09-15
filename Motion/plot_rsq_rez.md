@@ -1,3 +1,6 @@
+Understanding QC parameters
+===========================
+
     library(ggplot2)
     #check how percent and mean fd are related:
     aDF <- read.csv('../../Phenotypic_V1_0b_preprocessed1.csv')
@@ -11,6 +14,59 @@
     ## Warning: Removed 13 rows containing missing values (geom_point).
 
 ![](plot_rsq_rez_files/figure-markdown_strict/unnamed-chunk-1-1.png)<!-- -->
+
+    qplot(aDF$func_perc_fd)
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+    ## Warning: Removed 13 rows containing non-finite values (stat_bin).
+
+![](plot_rsq_rez_files/figure-markdown_strict/unnamed-chunk-1-2.png)<!-- -->
+
+    summary(glm(round(func_perc_fd) ~ AGE_AT_SCAN, family='quasipoisson', data=aDF))
+
+    ## 
+    ## Call:
+    ## glm(formula = round(func_perc_fd) ~ AGE_AT_SCAN, family = "quasipoisson", 
+    ##     data = aDF)
+    ## 
+    ## Deviance Residuals: 
+    ##    Min      1Q  Median      3Q     Max  
+    ## -5.139  -4.335  -2.537   1.040  14.139  
+    ## 
+    ## Coefficients:
+    ##              Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)  2.595297   0.099993  25.955   <2e-16 ***
+    ## AGE_AT_SCAN -0.002000   0.005335  -0.375    0.708    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## (Dispersion parameter for quasipoisson family taken to be 25.63276)
+    ## 
+    ##     Null deviance: 22294  on 1098  degrees of freedom
+    ## Residual deviance: 22290  on 1097  degrees of freedom
+    ##   (13 observations deleted due to missingness)
+    ## AIC: NA
+    ## 
+    ## Number of Fisher Scoring iterations: 6
+
+    ggplot(aDF, aes(x=(AGE_AT_SCAN), y=round(func_perc_fd)))+
+        geom_point()+
+        geom_smooth(method='glm', method.args=list(family='quasipoisson'))
+
+    ## Warning: Removed 13 rows containing non-finite values (stat_smooth).
+
+    ## Warning: Removed 13 rows containing missing values (geom_point).
+
+![](plot_rsq_rez_files/figure-markdown_strict/unnamed-chunk-1-3.png)<!-- -->
+
+The percentage of volumes with motion \> threshold is basically a count
+variable (normalized), so we should treat it as something like poisson
+distributed (most people have only a few, bounded at 0, but some people
+have a lot). We can predict the rate of bad volumes with age and find a
+small decrease in the expected rate with age. This is as expected. All
+this taken together can give us confidence that we are interpreting this
+measure correctly.
 
 Data checking
 =============
@@ -174,3 +230,16 @@ ICC plots
     plotThing(age_color_n_facet)
 
 ![](plot_rsq_rez_files/figure-markdown_strict/fun_plots2-2.png)<!-- -->
+
+Within motion cutoffs
+=====================
+
+    within_cutoff_plot <- ggplot(rsqDF, aes(x=n, y=med_icc, group=motion_thresh, color=motion_thresh))+
+        geom_errorbar(aes(ymin=med_icc-CI_95_icc/2, 
+                  ymax=med_icc+CI_95_icc/2), 
+                  width=0, alpha=.5)+
+        coord_cartesian(y=c(.8, 1))+
+        facet_wrap(~age_l)
+    plotThing(within_cutoff_plot) 
+
+![](plot_rsq_rez_files/figure-markdown_strict/unnamed-chunk-3-1.png)<!-- -->
