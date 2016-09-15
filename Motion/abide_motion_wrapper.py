@@ -110,12 +110,55 @@ def calc_rsq(av_corr_mat_A, av_corr_mat_B):
     
     return Rsq
 
+def exclude_nan(x,y):
+    """
+    Exclude NaN values if either entry in a pair of vectors has NaN
+    """
+    idx = np.logical_not(np.logical_or(np.isnan(x), np.isnan(y)))
+    x = x[idx]
+    y = y[idx]
+    n = len(x)
+    return [x, y, n]
+
+def compute_icc(av_corr_mat_A, av_corr_mat_B):
+    """
+    This function computes the inter-class correlation (ICC) of the
+    two classes represented by the x and y numpy vectors.
+    """
+
+    inds = np.triu_indices_from(av_corr_mat_B, k=1)
+    x = av_corr_mat_A[inds]
+    y = av_corr_mat_B[inds]
+    
+    if all(x == y):
+        return 1
+
+    [x, y, n] = exclude_nan(x,y)
+
+    ## Need at least 3 data points to compute this
+    if n < 3:
+        return np.nan
+
+    Sx = sum(x); Sy = sum(y);
+    Sxx = sum(x*x); Sxy = sum( (x+y)**2 )/2; Syy = sum(y*y)
+
+    fact = ((Sx + Sy)**2)/(n*2)
+    SS_tot = Sxx + Syy - fact
+    SS_among = Sxy - fact
+    SS_error = SS_tot - SS_among
+
+    MS_error = SS_error/n
+    MS_among = SS_among/(n-1)
+    ICC = (MS_among - MS_error) / (MS_among + MS_error)
+
+    return ICC
 
 def make_group_corr_mat(df):
     """
     This function reads in each subject's aal roi time series files and creates roi-roi correlation matrices
     for each subject and then sums them all together. The final output is a 3d matrix of all subjects 
-    roi-roi correlations, a mean roi-roi correlation matrix and a roi-roi covariance matrix.
+    roi-roi correlations, a mean roi-roi correlation matrix and a roi-roi covariance matrix. 
+    **NOTE WELL** This returns correlations transformed by the Fisher z, aka arctanh, function.    
     """
 
     # for each subject do the following
@@ -126,14 +169,17 @@ def make_group_corr_mat(df):
         ts_df = pd.read_table('DATA/{}_rois_aal.1D'.format(f_id))
 
         #create a correlation matrix from the roi all time series files
-        corr_mat = ts_df.corr()
+        corr_mat_r = ts_df.corr()
+        #the correlations need to be transformed to Fisher z, which is
+        #equivalent to the arctanh function.
+        corr_mat_z = np.arctanh(corr_mat_r)
         
         #for the first subject, add a correlation matrix of zeros that is the same dimensions as the aal roi-roi matrix
         if i == 0:
-            all_corr_mat = np.zeros([corr_mat.shape[0], corr_mat.shape[1], len(df)])
+            all_corr_mat = np.zeros([corr_mat_z.shape[0], corr_mat_z.shape[1], len(df)])
 
         #now add the correlation matrix you just created for each subject to the all_corr_mat matrix (3D)
-        all_corr_mat[:, :, i] = corr_mat
+        all_corr_mat[:, :, i] = corr_mat_z
     
     #create the mean correlation matrix (ignore nas - sometime there are some...)
     av_corr_mat = np.nanmean(all_corr_mat, axis=2)
