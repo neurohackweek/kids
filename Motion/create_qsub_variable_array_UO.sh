@@ -1,7 +1,7 @@
 #!/bin/bash
 
-for motion_thresh in {18..50..2}; do
-    for n in {10..300..10}; do 
+for motion_thresh in {5..50..5}; do
+    for n in {30..300..30}; do 
         for age_l in {6..16}; do 
             for age_gap in 3; do 
                 age_u=$(($age_l + $age_gap))
