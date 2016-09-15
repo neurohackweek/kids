@@ -10,21 +10,22 @@
 
     ## Warning: Removed 13 rows containing missing values (geom_point).
 
-![](plot_rsq_rez_files/figure-markdown_strict/unnamed-chunk-1-1.png)
+![](plot_rsq_rez_files/figure-markdown_strict/unnamed-chunk-1-1.png)<!-- -->
 
-    #ggsave(aplot, filename='mean_by_perc_fd.png',  width=10, height=10, units='in', dpi=150) 
+Data checking
+=============
 
     rsqDF <- read.csv('./RESULTS/SummaryRsqs.csv', stringsAsFactors=F)
 
     head(rsqDF) 
 
-    ##   motion_thresh   med_rsq      CI_95   n age_l age_u
-    ## 1            40 0.9572487 0.03649907 270     6     9
-    ## 2            15 0.9643414 0.04910226  90    15    18
-    ## 3            50 0.9694590 0.04284391  90    12    15
-    ## 4            40 0.9718624 0.04441847 120    15    18
-    ## 5            15 0.9645524 0.04696635 120    15    18
-    ## 6            45 0.9080782 0.17544432  30    11    14
+    ##   motion_thresh   med_rsq      CI_95   med_icc  CI_95_icc   n age_l age_u
+    ## 1            45 0.9113502 0.14894686 0.9560125 0.06709182  30    13    16
+    ## 2            50 0.9130510 0.11846852 0.9566213 0.05456147  30    13    16
+    ## 3            10 0.9545049 0.07439385 0.9777355 0.03571818 300    14    17
+    ## 4            30 0.9824655 0.02512164 0.9913838 0.01187193 300    11    14
+    ## 5            20 0.9459763 0.05508039 0.9732650 0.02762873 210     6     9
+    ## 6            20 0.9762827 0.02729964 0.9881639 0.01400458 240     9    12
 
     #Check frequencies and distributions
     table(rsqDF$motion_thresh)
@@ -90,11 +91,14 @@
     ##            45 10 10 10 10 10 10 10 10 10 10
     ##            50 10 10 10 10 10 10 10 10 10 10
 
-    qplot(rsqDF$med_rsq)
+    ggplot(rsqDF, aes(x=med_rsq))+geom_histogram(aes(y=..density..))+geom_density()
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](plot_rsq_rez_files/figure-markdown_strict/freq_check-1.png)
+![](plot_rsq_rez_files/figure-markdown_strict/freq_check-1.png)<!-- -->
+
+*R*<sup>2</sup> plots
+=====================
 
     #Plot the fun stuff
 
@@ -123,8 +127,50 @@
 
     plotThing(n_color_age_facet)
 
-![](plot_rsq_rez_files/figure-markdown_strict/fun_plots-1.png)
+![](plot_rsq_rez_files/figure-markdown_strict/fun_plots-1.png)<!-- -->
 
     plotThing(age_color_n_facet)
 
-![](plot_rsq_rez_files/figure-markdown_strict/fun_plots-2.png)
+![](plot_rsq_rez_files/figure-markdown_strict/fun_plots-2.png)<!-- -->
+
+ICC plots
+=========
+
+    ggplot(rsqDF, aes(x=med_icc))+geom_histogram(aes(y=..density..))+geom_density()
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+![](plot_rsq_rez_files/figure-markdown_strict/unnamed-chunk-2-1.png)<!-- -->
+
+    #Plot the fun stuff
+
+    n_color_age_facet <- ggplot(rsqDF, aes(x=motion_thresh, y=med_icc, group=(n), color=(n)))+
+        geom_errorbar(aes(ymin=med_icc-CI_95_icc/2, 
+                  ymax=med_icc+CI_95_icc/2), 
+                  width=0, alpha=.6)+
+        facet_wrap(~age_l)+
+        coord_cartesian(y=c(.5, 1))+
+        scale_color_gradient(low='darkgray', high='darkblue')
+
+    age_color_n_facet <- ggplot(rsqDF, aes(x=motion_thresh, y=med_icc, group=factor(age_l), color=factor(age_l)))+
+        geom_errorbar(aes(ymin=med_icc-CI_95_icc/2, 
+                  ymax=med_icc+CI_95_icc/2), 
+                  width=0, alpha=.5)+
+        coord_cartesian(y=c(.8, 1))+
+        facet_wrap(~n)
+
+    plotThing <- function(aPlot){
+        aPlot + 
+            geom_point(alpha=.5)+
+            geom_line(alpha=.5)+
+            scale_x_continuous(trans='identity')+
+            scale_y_continuous(trans='identity')
+    }
+
+    plotThing(n_color_age_facet)
+
+![](plot_rsq_rez_files/figure-markdown_strict/fun_plots2-1.png)<!-- -->
+
+    plotThing(age_color_n_facet)
+
+![](plot_rsq_rez_files/figure-markdown_strict/fun_plots2-2.png)<!-- -->
