@@ -24,6 +24,9 @@ def abide_motion_wrapper(motion_thresh, age_l, age_u, n, n_perms=1000, overwrite
 
     rsq_list, icc_list = split_half_outcome(df, motion_thresh, age_l, age_u, n, n_perms=n_perms)
     
+    print "R Squared list shape: " + str(rsq_list.shape)
+    print "ICC list shape: " + str(icc_list.shape)
+    
     med_rsq = np.median(rsq_list)
     rsq_CI = np.percentile(rsq_list, 97.5) - np.percentile(rsq_list, 2.5)
     
@@ -79,6 +82,8 @@ def split_half_outcome(df, motion_thresh, age_l, age_u, n, n_perms=100):
         
         #calculate the ICC between the two matrices
         ICC = compute_icc(av_corr_mat_A, av_corr_mat_B)
+        
+        print "Iteration " + str(i) + ": R^2 = " + str(Rsq) + ", ICC = " + str(ICC) 
         
         #build up R squared output
         Rsq_list += [Rsq]
