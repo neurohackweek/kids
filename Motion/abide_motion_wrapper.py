@@ -22,13 +22,16 @@ def abide_motion_wrapper(motion_thresh, age_l, age_u, n, n_perms=1000, overwrite
     
     df = read_in_data(behav_data_f)
 
-    rsq_list = split_half_outcome(df, motion_thresh, age_l, age_u, n, n_perms=n_perms)
-
+    rsq_list, icc_list = split_half_outcome(df, motion_thresh, age_l, age_u, n, n_perms=n_perms)
+    
     med_rsq = np.median(rsq_list)
     rsq_CI = np.percentile(rsq_list, 97.5) - np.percentile(rsq_list, 2.5)
+    
+    med_icc = np.median(icc_list)
+    icc_CI = np.percentile(icc_list, 97.5) - np.percentile(icc_list, 2.5)
 
-    columns = [ 'motion_thresh', 'age_l', 'age_u', 'n', 'med_rsq', 'CI_95' ]
-    results_df = pd.DataFrame(np.array([[motion_thresh, age_l, age_u, n, med_rsq, rsq_CI]]), 
+    columns = [ 'motion_thresh', 'age_l', 'age_u', 'n', 'med_rsq', 'CI_95', 'med_icc', 'CI_95_icc' ]
+    results_df = pd.DataFrame(np.array([[motion_thresh, age_l, age_u, n, med_rsq, rsq_CI, med_icc, icc_CI ]]), 
                                   columns=columns)
 
 
@@ -60,6 +63,7 @@ def split_half_outcome(df, motion_thresh, age_l, age_u, n, n_perms=100):
     
     #set up data frame of average R squared to fill up later
     Rsq_list = []
+    ICC_list = []
     
     #Do this in each permutation
     for i in range(n_perms):
@@ -72,11 +76,15 @@ def split_half_outcome(df, motion_thresh, age_l, age_u, n, n_perms=100):
         
         #calculate the R squared between the two matrices
         Rsq = calc_rsq(av_corr_mat_A, av_corr_mat_B)
-
+        
+        #calculate the ICC between the two matrices
+        ICC = compute_icc(av_corr_mat_A, av_corr_mat_B)
+        
         #build up R squared output
         Rsq_list += [Rsq]
+        ICC_list += [ICC]
     
-    return np.array(Rsq_list)
+    return np.array(Rsq_list), np.array(ICC_list)
 
 
 def calc_rsq(av_corr_mat_A, av_corr_mat_B):
