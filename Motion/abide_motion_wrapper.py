@@ -137,6 +137,9 @@ def compute_icc(av_corr_mat_A, av_corr_mat_B):
     """
     This function computes the inter-class correlation (ICC) of the
     two classes represented by the x and y numpy vectors.
+    from: http://stats.stackexchange.com/questions/63368/intra-class-correlation-and-experimental-design
+    and: Shrout, P. E., & Fleiss, J. L. (1979). Intraclass Correlations: Uses
+    in Assessing Rater Reliability. Psychological Bulletin, 86(2), 420-428. http://rokwa.x-y.net/Shrout-Fleiss-ICC.pdf
     """
 
     inds = np.triu_indices_from(av_corr_mat_B, k=1)
@@ -209,9 +212,11 @@ def split_two_matched_samples(df, motion_thresh, age_l, age_u, n):
     and participants who are between the lower and upper age limits (inclusive),
     then returns two matched samples of size n. The samples are matched on
     age in years, autism diagnosis, gender and scanning site.
+    Information about the motion measure is here:
+    http://preprocessed-connectomes-project.org/quality-assessment-protocol/
     """
 
-    # Start by removing all participants whos data is below a certain
+    # Start by removing all participants whose data is below a certain
     # motion threshold.
     df_samp_motion = df.loc[df['func_perc_fd'] < motion_thresh, :]
 
