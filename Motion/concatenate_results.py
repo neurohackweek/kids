@@ -1,6 +1,7 @@
 import pandas as pd
 from glob import glob 
-columns = [ 'motion_thresh', 'med_rsq', 'CI_95', 'n', 'age_l', 'age_u' ]
+#,motion_thresh,age_l,age_u,n,med_rsq,CI_95,med_icc,CI_95_icc
+columns = [ 'motion_thresh', 'med_rsq', 'CI_95', 'med_icc', 'CI_95_icc', 'n', 'age_l', 'age_u' ]
 results_df = pd.DataFrame(columns = columns)
 
 for f in glob('RESULTS/*csv'):
