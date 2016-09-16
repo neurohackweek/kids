@@ -4,7 +4,8 @@
 
 library(ggplot2)
 #check how percent and mean fd are related:
-aDF <- read.csv('../../Phenotypic_V1_0b_preprocessed1.csv')
+aDF_ <- read.csv('../../Phenotypic_V1_0b_preprocessed1.csv')
+aDF <- aDF_[aDF_$AGE_AT_SCAN >= 6 & aDF_$AGE_AT_SCAN <= 18,]
 aplot <- ggplot(aDF, aes(y=func_mean_fd, x=func_perc_fd))+
 	geom_point(alpha=.3)+
 	geom_smooth()
@@ -16,6 +17,12 @@ qplot(aDF$func_perc_fd)
 summary(glm(round(func_perc_fd) ~ AGE_AT_SCAN, family='quasipoisson', data=aDF))
 
 ggplot(aDF, aes(x=(AGE_AT_SCAN), y=round(func_perc_fd)))+
+    geom_point()+
+    geom_smooth(method='glm', method.args=list(family='quasipoisson'))
+
+summary(glm(func_mean_fd ~ AGE_AT_SCAN, family='quasipoisson', data=aDF))
+
+ggplot(aDF, aes(x=(AGE_AT_SCAN), y=func_mean_fd))+
     geom_point()+
     geom_smooth(method='glm', method.args=list(family='quasipoisson'))
 
