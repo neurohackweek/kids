@@ -131,8 +131,8 @@ plotThing(age_color_n_facet)
 #'
 
 within_cutoff_plot <- ggplot(rsqDF, aes(x=n, y=med_rsq, group=motion_thresh, color=motion_thresh))+
-	geom_errorbar(aes(ymin=med_icc-CI_95_icc/2, 
-			  ymax=med_icc+CI_95_icc/2), 
+	geom_errorbar(aes(ymin=med_rsq-CI_95/2, 
+			  ymax=med_rsq+CI_95/2), 
 		      width=0, alpha=.5)+
 	coord_cartesian(y=c(.7, 1))+
 	facet_wrap(~age_l)
