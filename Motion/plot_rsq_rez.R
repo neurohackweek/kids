@@ -41,7 +41,7 @@ ggplot(aDF, aes(x=(AGE_AT_SCAN), y=func_mean_fd))+
 
 #+ "load-data"
 
-rsqDF <- read.csv('./RESULTS/SummaryRsqs.csv', stringsAsFactors=F)
+rsqDF <- read.csv('./RESULTS_bin/SummaryRsqs.csv', stringsAsFactors=F)
 
 head(rsqDF) 
 
