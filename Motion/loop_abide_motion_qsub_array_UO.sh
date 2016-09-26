@@ -4,7 +4,7 @@
 #PBS -e /home5/flournoy/ 
 #PBS -o /home5/flournoy/ 
 #PBS -q short 
-#PBS -l nodes=1:ppn=1 
+#PBS -l nodes=1:ppn=4 
 PARAMFILE=abide_motion_parameters.tsv 
 
 line=$(cat $PARAMFILE | head -n $PBS_ARRAYID | tail -n 1)
@@ -20,4 +20,4 @@ export overwrite=$(echo "$line" | cut -f6)
 
 #PBS -V 
 
-/home5/flournoy/kids/Motion/SgeAbideMotion_UO.sh
+/home5/flournoy/kids/Motion/SgeAbideMotionCV_UO.sh
