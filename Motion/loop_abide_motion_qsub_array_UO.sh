@@ -4,7 +4,7 @@
 #PBS -e /home5/flournoy/ 
 #PBS -o /home5/flournoy/ 
 #PBS -q short 
-#PBS -l nodes=1:ppn=8 
+#PBS -l nodes=1:ppn=4 
 PARAMFILE=abide_motion_parameters.tsv 
 
 line=$(cat $PARAMFILE | head -n $PBS_ARRAYID | tail -n 1)
