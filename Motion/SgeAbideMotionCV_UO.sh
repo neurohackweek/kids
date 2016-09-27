@@ -9,4 +9,4 @@ Code="/home5/flournoy/kids/Motion/runCVMotionTest.py"
 echo Running $Code
 echo "motion_thresh=${motion_thresh},age_l=${age_l},age_u=${age_u},n=${n},n_perms=${n_perms},overwrite=${overwrite}"
 date
-/home5/flournoy/miniconda2/envs/kidsPy2/bin/python $Code --fc_file ./abide_fc_data_fisher_z.csv --output_dir cv_output/ --model_dir cv_models/ --mt $motion_thresh --N $n --cvmethod sss --oos_iter $n_perms 
+/home5/flournoy/miniconda2/envs/kidsPy2/bin/python $Code --fc_file ./abide_fc_data_fisher_z.csv --output_dir cv_output/sss_svc_run2/ --model_dir cv_models/sss_svc_run2/ --mt $motion_thresh --N $n --cvmethod sss --oos_iter $n_perms 

@@ -160,7 +160,7 @@ def testModel(data, labels, clf = None, modelDir = None, fname_prefix = None, ou
             os.makedirs(outputDir)
         outPath = os.path.join(outputDir, fname_prefix)
         print "Saving test accuracy and predictions to {}*".format(outPath)
-        np.savetxt(fileName + '_TestLabelFreq.csv',np.unique(labels, return_counts=True), delimiter=',', newline=os.linesep)
+        np.savetxt(outPath + '_TestLabelFreq.csv',np.unique(labels, return_counts=True), delimiter=',', newline=os.linesep)
         #Save accuracy
         np.savetxt(outPath + '_TestAcc.csv', np.array([accuracy]), delimiter=',',newline=os.linesep)
         #Save predictions

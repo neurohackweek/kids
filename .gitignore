@@ -2,3 +2,5 @@
 *.nii.gz
 reho/
 .ipynb_checkpoints/
+*.pkl
+*.npy
