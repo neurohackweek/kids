@@ -115,7 +115,7 @@ def trainModel(data, labels, strata, modelDir = None, fname_prefix = None, class
             os.makedirs(modelDir)
         fileName = os.path.join(modelDir, fname_prefix)
         print ("Writing data to {}*".format(fileName))
-        np.savetxt(fileName + '_TrainLabelFreq.csv',np.unique(labels, return_counts=True),modelWeights]), delimiter=',', newline=os.linesep)
+        np.savetxt(fileName + '_TrainLabelFreq.csv',np.unique(labels, return_counts=True), delimiter=',', newline=os.linesep)
         np.savetxt(fileName + '_Weights.csv',np.concatenate([modelIntercept,modelWeights]), delimiter=',', newline=os.linesep)
         np.savetxt(fileName + '_TrainAcc.csv',np.array([accuracy]), delimiter=',',newline=os.linesep)
         joblib.dump(clf, fileName + '_Model.pkl')
@@ -160,7 +160,7 @@ def testModel(data, labels, clf = None, modelDir = None, fname_prefix = None, ou
             os.makedirs(outputDir)
         outPath = os.path.join(outputDir, fname_prefix)
         print "Saving test accuracy and predictions to {}*".format(outPath)
-        np.savetxt(fileName + '_TestLabelFreq.csv',np.unique(labels, return_counts=True),modelWeights]), delimiter=',', newline=os.linesep)
+        np.savetxt(fileName + '_TestLabelFreq.csv',np.unique(labels, return_counts=True), delimiter=',', newline=os.linesep)
         #Save accuracy
         np.savetxt(outPath + '_TestAcc.csv', np.array([accuracy]), delimiter=',',newline=os.linesep)
         #Save predictions
