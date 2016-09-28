@@ -3,24 +3,29 @@
     library(tidyr)
     library(ggplot2)
 
-    cvFiles <- data.table(file=dir('./cv_output/', pattern='*TestAcc.csv', full.names = TRUE)) 
-    cvFiles <- cvFiles[, TestAcc:=fread(file), by=file]
-    cvFiles <- cvFiles[, c('cvMethod', 'classifier', 'mt', 'n', 'i'):=tstrsplit(tstrsplit(file, '/')[[4]], '_(mt|n|i)*')]
+    #Remember to extract the files from TestAcc.tar.gz first
+    cvFiles <- dir('./cv_output/sss_svc_run2', pattern='*_TestAcc.csv', full.names = TRUE) 
+    lst <- lapply(cvFiles, fread)
+    cvData <- rbindlist(lst)
+    cvData[,'file'] <- cvFiles
+    cvData <- cvData[, c('cvMethod', 'classifier', 'mt', 'n', 'i'):=tstrsplit(tstrsplit(file, '/')[[4]], '_(mt|n|i)*')]
 
-    ## Warning in `[.data.table`(cvFiles, , `:=`(c("cvMethod", "classifier",
+    ## Warning in `[.data.table`(cvData, , `:=`(c("cvMethod", "classifier",
     ## "mt", : Supplied 5 columns to be assigned a list (length 6) of values (1
     ## unused)
 
-    cvFiles <- cvFiles[, mt:=factor(mt, levels=seq(5, 50, 5))]
-    cvFiles <- cvFiles[, n:=factor(n, levels=seq(30, 100, 10))]
+    setnames(cvData, 'V1', 'TestAcc')
 
-    summaryCV <- cvFiles[, as.list(quantile(TestAcc, probs=c(.05, .5, .95))), keyby=c('mt', 'n')]
+    cvData <- cvData[, mt:=factor(mt, levels=seq(2, 50, 2))]
+    cvData <- cvData[, n:=factor(n, levels=seq(30, 100, 10))]
 
-    N_labels <- paste0('N = ', levels(cvFiles$n))
-    names(N_labels) <- levels(cvFiles$n)
+    summaryCV <- cvData[, as.list(quantile(TestAcc, probs=c(.05, .5, .95))), keyby=c('mt', 'n')]
 
-    ggplot(cvFiles, aes(x=mt, y=TestAcc))+
-        geom_point(alpha=.05, position=position_jitter(w=1, h=.1))+
+    N_labels <- paste0('N = ', levels(cvData$n))
+    names(N_labels) <- levels(cvData$n)
+
+    ggplot(cvData, aes(x=mt, y=TestAcc))+
+        geom_point(alpha=.01, position=position_jitter(w=.2, h=.1))+
         geom_line(aes(group=n), stat='smooth', method='loess', 
               position=position_dodge(w=1))+
         geom_point(data=summaryCV, aes(x=mt, y=`50%`),
@@ -33,14 +38,16 @@
 
 ![](plot_svc_motion_comparison_files/figure-markdown_strict/unnamed-chunk-2-1.png)<!-- -->
 
-    ggplot(cvFiles, aes(x=n, y=TestAcc, group=mt, color=mt))+
-        geom_point(alpha=.025, position=position_jitter(width=.5, height=.1))+
+    ggplot(cvData, aes(x=n, y=TestAcc, group=mt, color=mt))+
+        geom_point(alpha=.0, position=position_jitter(width=.5, height=.1))+
         geom_errorbar(data=summaryCV, aes(x=n, y=NULL, ymin=`5%`, ymax=`95%`),
-               width=.1, alpha=.25)+
-        geom_point(data=summaryCV, aes(x=n, y=`50%`))+
-        geom_line(aes(group=mt, color=mt), stat='smooth', method='loess', alpha=.75)+ 
+               width=2, alpha=.5, position=position_dodge(w=0))+
+        geom_point(data=summaryCV, aes(x=n, y=`50%`), position=position_dodge(w=0))+
+        geom_line(aes(group=mt, color=mt), stat='smooth', method='loess', alpha=.5)+ 
         theme(panel.background=element_rect(fill='white'))+
         labs(x='Sample Size', y='Predictive Accuracy (ASD Dx)',
              color='Motion\nThreshold')
+
+    ## Warning: position_dodge requires non-overlapping x intervals
 
 ![](plot_svc_motion_comparison_files/figure-markdown_strict/unnamed-chunk-3-1.png)<!-- -->
