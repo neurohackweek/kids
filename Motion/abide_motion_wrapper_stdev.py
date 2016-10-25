@@ -28,7 +28,7 @@ def abide_motion_wrapper(motion_thresh, age_l, age_u, n, n_perms=1000, overwrite
     print "ICC list shape: " + str(icc_list.shape)
     
     med_rsq = np.median(rsq_list)
-    #rsq_CI = np.percentile(rsq_list, 97.5) - np.percentile(rsq_list, 2.5)
+    rsq_CI = np.percentile(rsq_list, 97.5) - np.percentile(rsq_list, 2.5)
     
     med_icc = np.median(icc_list)
     icc_CI = np.percentile(icc_list, 97.5) - np.percentile(icc_list, 2.5)
