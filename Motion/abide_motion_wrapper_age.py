@@ -26,6 +26,15 @@ def abide_motion_wrapper(motion_thresh, age_l, age_u, n, n_perms=1000, overwrite
 
     rsq_list, icc_list = split_half_outcome(df, motion_thresh, age_l, age_u, n, n_perms=n_perms)
     
+    #check if age and motion are correlated
+    age=df_A["AGE_AT_SCAN"]
+	motion=df_A["func_perc_fd"]
+	r_a,p_a=scipy.stats.pearsonr(age, motion) #returns r and p
+	
+	age=df_B["AGE_AT_SCAN"]
+	motion=df_B["func_perc_fd"]
+	r_b,p_b=scipy.stats.pearsonr(age, motion) #returns r and p
+    
     print ("R Squared list shape: " + str(rsq_list.shape))
     print ("ICC list shape: " + str(icc_list.shape))
     
@@ -35,8 +44,8 @@ def abide_motion_wrapper(motion_thresh, age_l, age_u, n, n_perms=1000, overwrite
     med_icc = np.median(icc_list)
     icc_CI = np.percentile(icc_list, 97.5) - np.percentile(icc_list, 2.5)
 
-    columns = [ 'motion_thresh', 'age_l', 'age_u', 'n', 'med_rsq', 'CI_95', 'med_icc', 'CI_95_icc' ]
-    results_df = pd.DataFrame(np.array([[motion_thresh, age_l, age_u, n, med_rsq, rsq_CI, med_icc, icc_CI ]]), 
+    columns = [ 'motion_thresh', 'age_l', 'age_u', 'n', 'med_rsq', 'CI_95', 'med_icc', 'CI_95_icc','age_motion_r_a','age_motion_p_a','age_motion_r_b','age_motion_p_b' ]
+    results_df = pd.DataFrame(np.array([[motion_thresh, age_l, age_u, n, med_rsq, rsq_CI, med_icc, icc_CI, r_a, p_a, r_b, p_b ]]), 
                                   columns=columns)
 
 
@@ -174,9 +183,10 @@ def compute_icc(av_corr_mat_A, av_corr_mat_B):
 def make_group_corr_mat(df):
     """
     This function reads in each subject's aal roi time series files and creates roi-roi correlation matrices
-    for each subject and then sums them all together. The final output is a 3d matrix of all subjects 
-    roi-roi correlations, a mean roi-roi correlation matrix and a roi-roi covariance matrix. 
-    **NOTE WELL** This returns correlations transformed by the Fisher z, aka arctanh, function.    
+    for each subject and then sums them all together. This creates  a 3d matrix of all subjects 
+    roi-roi correlations. These correlations are Z scored. Then each roi-roi Z-scored correlation is correlated with age 
+    across all subjects. The output of this function is aa 3d matrix of all subjects roi-roi correlations
+    and a 2d matrix of r values for each roi-roi correlation with age.  
     """
 
     # for each subject do the following
