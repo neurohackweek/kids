@@ -5,13 +5,15 @@ import numpy as np
 import os
 import pandas as pd
 import sys
+import scipy 
+import scipy.stats 
 
 
 
 def abide_motion_wrapper(motion_thresh, age_l, age_u, n, n_perms=1000, overwrite=True):
     behav_data_f = '../../Phenotypic_V1_0b_preprocessed1.csv'
        
-    f_name = 'RESULTS_bin/rsq_{:03.0f}pct_{:03.0f}subs_{:02.0f}to{:02.0f}.csv'.format(motion_thresh, n, age_l, age_u)
+    f_name = 'RESULTS_age/rsq_{:03.0f}pct_{:03.0f}subs_{:02.0f}to{:02.0f}.csv'.format(motion_thresh, n, age_l, age_u)
     
     # By default this code will recreate files even if they already exist
     # (overwrite=True)
@@ -24,16 +26,9 @@ def abide_motion_wrapper(motion_thresh, age_l, age_u, n, n_perms=1000, overwrite
     
     df = read_in_data(behav_data_f)
 
-    rsq_list, icc_list = split_half_outcome(df, motion_thresh, age_l, age_u, n, n_perms=n_perms)
+    rsq_list, icc_list,r_a_list,p_a_list,r_b_list,p_b_list = split_half_outcome(df, motion_thresh, age_l, age_u, n, n_perms=n_perms)
     
-    #check if age and motion are correlated
-    age=df_A["AGE_AT_SCAN"]
-	motion=df_A["func_perc_fd"]
-	r_a,p_a=scipy.stats.pearsonr(age, motion) #returns r and p
-	
-	age=df_B["AGE_AT_SCAN"]
-	motion=df_B["func_perc_fd"]
-	r_b,p_b=scipy.stats.pearsonr(age, motion) #returns r and p
+
     
     print ("R Squared list shape: " + str(rsq_list.shape))
     print ("ICC list shape: " + str(icc_list.shape))
@@ -44,8 +39,14 @@ def abide_motion_wrapper(motion_thresh, age_l, age_u, n, n_perms=1000, overwrite
     med_icc = np.median(icc_list)
     icc_CI = np.percentile(icc_list, 97.5) - np.percentile(icc_list, 2.5)
 
-    columns = [ 'motion_thresh', 'age_l', 'age_u', 'n', 'med_rsq', 'CI_95', 'med_icc', 'CI_95_icc','age_motion_r_a','age_motion_p_a','age_motion_r_b','age_motion_p_b' ]
-    results_df = pd.DataFrame(np.array([[motion_thresh, age_l, age_u, n, med_rsq, rsq_CI, med_icc, icc_CI, r_a, p_a, r_b, p_b ]]), 
+    med_r_a = np.median(r_a_list)
+    med_p_a = np.median(p_a_list)
+    med_r_b = np.median(r_b_list)
+    med_p_b = np.median(p_b_list)
+
+
+    columns = [ 'motion_thresh', 'age_l', 'age_u', 'n', 'med_rsq', 'CI_95', 'med_icc', 'CI_95_icc','med_age_motion_r_a','med_age_motion_p_a','med_age_motion_r_b','med_age_motion_p_b' ]
+    results_df = pd.DataFrame(np.array([[motion_thresh, age_l, age_u, n, med_rsq, rsq_CI, med_icc, icc_CI, med_r_a, med_p_a, med_r_b, med_p_b ]]), 
                                   columns=columns)
 
 
@@ -78,6 +79,11 @@ def split_half_outcome(df, motion_thresh, age_l, age_u, n, n_perms=100):
     #set up data frame of average R squared to fill up later
     Rsq_list = []
     ICC_list = []
+    ## set up age-motion corr dfs
+    r_a_list=[]
+    p_a_list=[]
+    r_b_list=[]
+    p_b_list=[]
     
     #Do this in each permutation
     for i in range(n_perms):
@@ -99,8 +105,24 @@ def split_half_outcome(df, motion_thresh, age_l, age_u, n, n_perms=100):
         #build up R squared output
         Rsq_list += [Rsq]
         ICC_list += [ICC]
+
+
+    	#check if age and motion are correlated
+    	age=df_A["AGE_AT_SCAN"]
+    	motion=df_A["func_perc_fd"]
+    	r_a,p_a=scipy.stats.pearsonr(age, motion) #returns r and p
+	
+    	age=df_B["AGE_AT_SCAN"]
+    	motion=df_B["func_perc_fd"]
+    	r_b,p_b=scipy.stats.pearsonr(age, motion) #returns r and p
+
+ 	#build up R and p output
+        r_a_list += [r_a]
+        p_a_list += [p_a]
+        r_b_list += [r_b]
+        p_b_list += [p_b]
     
-    return np.array(Rsq_list), np.array(ICC_list)
+    return np.array(Rsq_list), np.array(ICC_list), np.array(r_a_list), np.array(p_a_list),np.array(r_b_list), np.array(p_b_list)
 
 
 def calc_rsq(av_corr_mat_A, av_corr_mat_B):
@@ -213,6 +235,7 @@ def make_group_corr_mat(df):
     age=df.loc[:, 'AGE_AT_SCAN']
     age_df=pd.DataFrame(age)
     age_df.index=[x for x in range(age_df.shape[0])]
+    age_roi_corr =np.ones((116,116))
     for  r in range(all_corr_mat.shape[0]):
             for rn in range(all_corr_mat.shape[0]):
                 if rn != r:
@@ -278,6 +301,7 @@ def split_two_matched_samples(df, motion_thresh, age_l, age_u, n):
     ##take 2n/4 from each bin
     n_samp=(n*2)/4
     n_samp
+    n_samp=int(n_samp)
 
     # Shuffle these remaining participants to ensure you get different sub
     # samples each time you run the code.

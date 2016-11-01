@@ -1,0 +1,2 @@
+,motion_thresh,age_l,age_u,n,med_rsq,CI_95,med_icc,CI_95_icc,med_age_motion_r_a,med_age_motion_p_a,med_age_motion_r_b,med_age_motion_p_b
+0,35.0,6.0,18.0,60.0,-0.911554518747,2.45630231249,0.136102967774,0.605593868486,-0.150238158316,0.245250070712,-0.123923521245,0.327958896244
