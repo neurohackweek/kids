@@ -46,7 +46,7 @@ def read_in_data(behav_data_f):
     Read in the data
     """
     df = pd.read_csv(behav_data_f)
-    df = df.loc[df['func_perc_fd'].notnull(), :]
+    df = df.loc[df['func_mean_fd'].notnull(), :]
     df = df.loc[df['FILE_ID']!='no_filename', :]
     df['AGE_YRS'] = np.floor(df['AGE_AT_SCAN'])
 
