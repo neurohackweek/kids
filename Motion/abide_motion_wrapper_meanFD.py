@@ -9,7 +9,7 @@ import sys
 def abide_motion_wrapper(motion_thresh, age_l, age_u, n, n_perms=1000, overwrite=True):
     behav_data_f = '../../Phenotypic_V1_0b_preprocessed1.csv'
        
-    f_name = 'RESULTS_mean_fd/rsq_{:03.0f}pct_{:03.0f}subs_{:02.0f}to{:02.0f}.csv'.format(motion_thresh, n, age_l, age_u)
+    f_name = 'RESULTS_mean_fd/rsq_{:03.3f}pct_{:03.0f}subs_{:02.0f}to{:02.0f}.csv'.format(motion_thresh, n, age_l, age_u)
     
     # By default this code will recreate files even if they already exist
     # (overwrite=True)
