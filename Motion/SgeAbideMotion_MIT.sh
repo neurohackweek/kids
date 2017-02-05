@@ -9,7 +9,7 @@
 #SBATCH --mem=10GB
 
 # Defines path to the python code you want to run 
-Code="abide_motion_wrapper_strat_motion.py"
+Code="abide_motion_wrapper_JAL.py"
 # Defines motion threshold from input 1
 motion_thresh=$1
 age_l=$2
